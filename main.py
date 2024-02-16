@@ -35,7 +35,7 @@ def download_attachments(issues, dest_dir):
         dest_dir (str): destination directory path
     """
     for issue in issues:
-        # 添付ファイルダウンロード
+        # Downloard attachments
         if 0 < len(issue.fields.attachment):
             for attachment in issue.fields.attachment:
                 issue_dir = f"{dest_dir}/{issue.key}"
@@ -45,7 +45,7 @@ def download_attachments(issues, dest_dir):
                 with open(file_path, "wb") as f:
                     f.write(res)
             
-            # ZIP化
+            # Archive
             zipfile_name = f"{dest_dir}/{issue.key}.zip"
             with zipfile.ZipFile(zipfile_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for root, _, files in os.walk(issue_dir):
@@ -56,7 +56,7 @@ def download_attachments(issues, dest_dir):
             shutil.rmtree(issue_dir)
 
 if __name__ == '__main__':
-    # .envファイルから環境変数読み込み
+    # Load environment variable from .env
     load_dotenv()
     jira_server = os.getenv('jira_server')
     username = os.getenv('username')
@@ -67,23 +67,18 @@ if __name__ == '__main__':
     options = {'server': jira_server}
     jira = JIRA(options=options, basic_auth=(username, password))
     
-    # dest_dirディレクトリ作成
     make_direcotry(dest_dir)
 
     for project in projects:
-        # projectディレクトリ作成
         project_dir = f"{dest_dir}/{project}"
         make_direcotry(project_dir)
 
-        # チケットリスト取得
         issues = jira.search_issues(f'project={project}', maxResults=10)
         
-        # CSVに出力
         issues_to_csv(issues=issues, dest_csv=f"{project_dir}/{project}_issues.csv")
 
-        # TODO CSVのカラムのcutomfieldを見やすい名前に変換
+        # TODO Replace column name from "customfield_XXX"
 
-        # 添付ファイルダウンロード
         download_attachments(issues=issues, dest_dir=project_dir)
 
 
