@@ -20,13 +20,15 @@ def issues_to_csv(issues, dest_csv):
         dest_csv (str): destination csv file path
     """
     with open(dest_csv, "w", newline="") as f:
-        all_fields = []
+        all_fields = ['Key']
         for issue in issues:
             all_fields.extend([key for key in issue.fields.__dict__.keys() if key not in all_fields])
         writer = csv.DictWriter(f, fieldnames=all_fields)
         writer.writeheader()
         for issue in issues:
-            writer.writerow(issue.raw['fields'])
+            row = {'Key': issue.key}
+            row.update(issue.raw['fields'])
+            writer.writerow(row)
 
 def download_attachments(issues, dest_dir):
     """
@@ -57,8 +59,8 @@ def download_attachments(issues, dest_dir):
             shutil.rmtree(issue_dir)
 
 def replace_column_header(csvfile, fields):
-    df = pd.read_csv(csvfile)
-    df.columns = [col.replace(col, [field['name'] for field in fields if field['id'] == col][0] if len([field['name'] for field in fields if field['id'] == col]) > 0 else col) for col in df.columns]
+    df = pd.read_csv(csvfile, index_col='Key')
+    df.columns = [col.replace(col, [field['name'] for field in fields if field['id'] == col][0] if len([field['name'] for field in fields if field['id'] == col]) > 0 else col.title()) for col in df.columns]
     df.to_csv(csvfile)
 
 if __name__ == '__main__':
