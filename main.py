@@ -12,18 +12,18 @@ def make_direcotry(directory):
     if not os.path.exists(directory):
         os.mkdir(directory)
 
-def issues_to_csv(issues, dest_csv):
+def issues_to_tsv(issues, dest_tsv):
     """
-    export jira issues to csv
+    export jira issues to tsv
     Args:
         issues (Issue[]): list of jira issue
-        dest_csv (str): destination csv file path
+        dest_tsv (str): destination tsv file path
     """
-    with open(dest_csv, "w", newline="") as f:
+    with open(dest_tsv, "w", newline="") as f:
         all_fields = ['Key']
         for issue in issues:
             all_fields.extend([key for key in issue.fields.__dict__.keys() if key not in all_fields])
-        writer = csv.DictWriter(f, fieldnames=all_fields)
+        writer = csv.DictWriter(f, fieldnames=all_fields, delimiter='\t')
         writer.writeheader()
         for issue in issues:
             row = {'Key': issue.key}
@@ -58,10 +58,10 @@ def download_attachments(issues, dest_dir):
                         zipf.write(issue_dir, zipfile_name)
             shutil.rmtree(issue_dir)
 
-def replace_column_header(csvfile, fields):
-    df = pd.read_csv(csvfile, index_col='Key')
+def replace_column_header(tsvfile, fields):
+    df = pd.read_csv(tsvfile, index_col='Key', delimiter="\t")
     df.columns = [col.replace(col, [field['name'] for field in fields if field['id'] == col][0] if len([field['name'] for field in fields if field['id'] == col]) > 0 else col.title()) for col in df.columns]
-    df.to_csv(csvfile)
+    df.to_csv(tsvfile, sep="\t")
 
 if __name__ == '__main__':
     # Load environment variable from .env
@@ -83,10 +83,10 @@ if __name__ == '__main__':
 
         issues = jira.search_issues(f'project={project}', maxResults=10)
 
-        csvfile = f"{project_dir}/{project}_issues.csv"
-        issues_to_csv(issues=issues, dest_csv=csvfile)
+        tsvfile = f"{project_dir}/{project}_issues.tsv"
+        issues_to_tsv(issues=issues, dest_tsv=tsvfile)
 
-        replace_column_header(csvfile=csvfile, fields=jira.fields())
+        replace_column_header(tsvfile=tsvfile, fields=jira.fields())
 
         download_attachments(issues=issues, dest_dir=project_dir)
 
