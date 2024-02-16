@@ -1,6 +1,7 @@
 import os, csv, zipfile, shutil
 from dotenv import load_dotenv
 from jira import JIRA
+import pandas as pd
 
 def make_direcotry(directory):
     """
@@ -55,6 +56,11 @@ def download_attachments(issues, dest_dir):
                         zipf.write(issue_dir, zipfile_name)
             shutil.rmtree(issue_dir)
 
+def replace_column_header(csvfile, fields):
+    df = pd.read_csv(csvfile)
+    df.columns = [col.replace(col, [field['name'] for field in fields if field['id'] == col][0] if len([field['name'] for field in fields if field['id'] == col]) > 0 else col) for col in df.columns]
+    df.to_csv(csvfile)
+
 if __name__ == '__main__':
     # Load environment variable from .env
     load_dotenv()
@@ -74,10 +80,11 @@ if __name__ == '__main__':
         make_direcotry(project_dir)
 
         issues = jira.search_issues(f'project={project}', maxResults=10)
-        
-        issues_to_csv(issues=issues, dest_csv=f"{project_dir}/{project}_issues.csv")
 
-        # TODO Replace column name from "customfield_XXX"
+        csvfile = f"{project_dir}/{project}_issues.csv"
+        issues_to_csv(issues=issues, dest_csv=csvfile)
+
+        replace_column_header(csvfile=csvfile, fields=jira.fields())
 
         download_attachments(issues=issues, dest_dir=project_dir)
 
