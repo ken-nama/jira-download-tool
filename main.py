@@ -66,11 +66,12 @@ def replace_column_header(tsvfile, fields):
 if __name__ == '__main__':
     # Load environment variable from .env
     load_dotenv()
-    jira_server = os.getenv('jira_server')
+    jira_server = os.getenv('jira_server', default="https://jira.atlassian.com/")
     username = os.getenv('username')
     password = os.getenv('password')
     projects = os.getenv('projects').split(',')
-    dest_dir = os.getenv('dest_dir')
+    dest_dir = os.getenv('dest_dir', default="downloads")
+    max_results = os.getenv('max_results', default=50)
 
     options = {'server': jira_server}
     jira = JIRA(options=options, basic_auth=(username, password))
@@ -81,7 +82,7 @@ if __name__ == '__main__':
         project_dir = f"{dest_dir}/{project}"
         make_direcotry(project_dir)
 
-        issues = jira.search_issues(f'project={project}', maxResults=10)
+        issues = jira.search_issues(f'project={project}', maxResults=max_results)
 
         tsvfile = f"{project_dir}/{project}_issues.tsv"
         issues_to_tsv(issues=issues, dest_tsv=tsvfile)
